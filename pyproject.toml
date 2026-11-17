@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tempora"
+version = "2.0.0"
+description = "Synthetic financial time series with a conditional WGAN-GP: training, realism evaluation, risk backtests and an interactive dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Padmashree Shah", email = "Padmashreeshah@gmail.com" }]
+keywords = ["gan", "wgan-gp", "synthetic data", "time series", "finance", "quantitative finance", "risk", "deep learning"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = ["numpy>=1.24", "pandas>=1.5", "scipy>=1.10", "scikit-learn>=1.2"]
+
+[project.optional-dependencies]
+torch = ["torch>=2.0"]
+download = ["yfinance>=0.2"]
+notebook = ["matplotlib>=3.6", "jupyter"]
+dev = ["pytest>=7", "ruff==0.16.9"]
+
+[project.scripts]
+tempora = "tempora.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Padu28/wgan-financial-timeseries"
+Dashboard = "https://padu28.github.io/wgan-financial-timeseries/"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 132
+target-version = "py310"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["B905"]

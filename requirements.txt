@@ -1,0 +1,13 @@
+# Core (NumPy WGAN-GP engine, evaluation, CLI)
+numpy>=1.24
+pandas>=1.5
+scipy>=1.10
+scikit-learn>=1.2
+
+# Optional
+matplotlib>=3.6      # notebook charts
+yfinance>=0.2        # download real prices
+# torch>=2.0         # PyTorch backend (GPU / larger models)
+
+# Development
+pytest>=7

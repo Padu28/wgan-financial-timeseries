@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tempora: synthetic financial time series with WGAN-GP</title>
+  <meta name="description" content="Generate, inspect and stress-test synthetic market scenarios from a conditional Wasserstein GAN with gradient penalty.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip" href="#generate">Skip to content</a>
+
+  <header class="bar">
+    <a class="brand" href="#generate" aria-label="Tempora home">
+      <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="10" fill="var(--ink)"/><path d="M6 26 L13 19 L18 23 L25 12" fill="none" stroke="var(--paper)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 12 L34 8 M25 12 L34 15 M25 12 L34 22" stroke="var(--synth)" stroke-width="2.4" stroke-linecap="round"/></svg>
+      <span>Tempora</span>
+    </a>
+    <nav class="sections" aria-label="Sections">
+      <a href="#generate" class="on">Generate</a>
+      <a href="#realism">Realism</a>
+      <a href="#turing">Real or synthetic?</a>
+      <a href="#risk">Risk lab</a>
+      <a href="#training">Training</a>
+      <a href="#model">Model</a>
+    </nav>
+    <div class="bar-tools">
+      <span class="dataset" id="dataset"></span>
+      <button class="icon" id="themeBtn" aria-label="Switch colour theme" title="Switch theme (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z" fill="currentColor"/></svg></button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. GENERATE -->
+    <section id="generate" class="sec hero">
+      <div class="hero-text">
+        <h1>What could the next twenty trading days look like?</h1>
+        <p class="lede">Pick a moment in the test period. The generator sees only the last three days and draws thousands of possible futures; the fan shows where most of them land. Then reveal what actually happened.</p>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-chart card">
+          <div class="ctrl-row">
+            <button class="step" id="prevCtx" aria-label="Previous moment">‹</button>
+            <label class="ctx"><span class="sr-only">Market moment</span><select id="ctxSelect"></select></label>
+            <button class="step" id="nextCtx" aria-label="Next moment">›</button>
+            <span class="grow"></span>
+            <button class="btn" id="genBtn">Generate scenarios</button>
+            <button class="btn ghost" id="revealBtn" aria-pressed="false">Reveal what happened</button>
+          </div>
+          <div id="fan" class="chart fan" aria-live="polite"></div>
+          <div class="legend" id="fanLegend"></div>
+        </div>
+        <aside class="readout" id="readout"></aside>
+      </div>
+    </section>
+
+    <!-- 2. REALISM -->
+    <section id="realism" class="sec">
+      <div class="sec-head">
+        <h2>Does it behave like a real market?</h2>
+        <p>Real asset returns share a handful of statistical habits, known as stylized facts. A useful generator has to reproduce all of them at once, not just the average move.</p>
+      </div>
+      <div class="scorecard" id="scorecard"></div>
+      <div class="grid2">
+        <figure class="card"><figcaption><h3>Distribution of daily returns</h3><p>Synthetic (orange) against real (ink). Log scale shows the tails.</p></figcaption><div id="hist" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Quantile–quantile</h3><p>Points on the diagonal mean the two distributions match, tails included.</p></figcaption><div id="qq" class="chart"></div></figure>
+      </div>
+      <div class="grid3">
+        <figure class="card"><figcaption><h3>Return autocorrelation</h3><p>Should stay near zero: yesterday doesn't predict today.</p></figcaption><div id="acfR" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Volatility clustering</h3><p>Autocorrelation of absolute returns: calm and stormy spells persist.</p></figcaption><div id="acfA" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Leverage effect</h3><p>Correlation of today's return with future squared returns: falls raise volatility.</p></figcaption><div id="lev" class="chart"></div></figure>
+      </div>
+      <figure class="card wide"><figcaption><h3>Whole synthetic market histories</h3><p>The generator chained window after window into long paths, each starting at 100. One line is the real series over the same number of days.</p></figcaption><div id="long" class="chart"></div></figure>
+    </section>
+
+    <!-- 3. TURING TEST -->
+    <section id="turing" class="sec">
+      <div class="sec-head">
+        <h2>Can you tell which one is real?</h2>
+        <p>Two twenty-day price paths: one comes from the market, one from the generator. Pick the real one. Ten rounds.</p>
+      </div>
+      <div class="tt card">
+        <div class="tt-pair">
+          <button class="tt-opt" id="ttA" aria-label="Path A is real"><span class="tt-tag">A</span><div class="chart" id="ttChartA"></div></button>
+          <button class="tt-opt" id="ttB" aria-label="Path B is real"><span class="tt-tag">B</span><div class="chart" id="ttChartB"></div></button>
+        </div>
+        <div class="tt-foot">
+          <div class="tt-score" id="ttScore"></div>
+          <div class="tt-msg" id="ttMsg" role="status" aria-live="polite">Choose A or B (keys <kbd>A</kbd> / <kbd>B</kbd>).</div>
+          <button class="btn ghost" id="ttNext">Next pair</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. RISK -->
+    <section id="risk" class="sec">
+      <div class="sec-head">
+        <h2>Can you trust its risk numbers?</h2>
+        <p>Out-of-sample checks on the test period, which the model never saw. A calibrated generator's 90% band should contain the outcome 90% of the time.</p>
+      </div>
+      <div class="kpis" id="riskKpis"></div>
+      <div class="grid2">
+        <figure class="card"><figcaption><h3>Interval coverage by horizon</h3><p>Share of realised cumulative returns inside each central band. Dashed lines are the targets.</p></figcaption><div id="coverage" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Probability integral transform</h3><p>Where the realised 20-day return fell among the simulations. A flat histogram means well-calibrated.</p></figcaption><div id="pit" class="chart"></div></figure>
+      </div>
+      <figure class="card wide"><figcaption><h3>Value-at-risk backtest</h3><p>Next-day 95% VaR from the simulations (shaded) against realised returns. Red marks are breaches.</p></figcaption><div id="varChart" class="chart"></div></figure>
+    </section>
+
+    <!-- 5. TRAINING -->
+    <section id="training" class="sec">
+      <div class="sec-head">
+        <h2>Watch it learn</h2>
+        <p>Replay training. The generator starts from noise; drag the slider or press play to see the same four scenarios sharpen while the critic's Wasserstein estimate and gradient norm settle.</p>
+      </div>
+      <div class="replay card">
+        <div class="replay-ctrl">
+          <button class="btn" id="playBtn" aria-pressed="false">Play</button>
+          <input type="range" id="snapSlider" min="0" max="0" value="0" aria-label="Training step">
+          <output id="snapOut"></output>
+        </div>
+        <div class="replay-grid">
+          <div id="replayChart" class="chart"></div>
+          <div class="replay-stats" id="replayStats"></div>
+        </div>
+      </div>
+      <div class="grid3">
+        <figure class="card"><figcaption><h3>Wasserstein estimate</h3><p>Critic's estimate of the distance between real and generated windows.</p></figcaption><div id="wChart" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Gradient norm</h3><p>The penalty holds the critic's gradient near 1 (dashed), the Lipschitz condition WGAN needs.</p></figcaption><div id="gnChart" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Cyclical learning rates</h3><p>Triangular schedule from the original project, for critic and generator.</p></figcaption><div id="lrChart" class="chart"></div></figure>
+      </div>
+    </section>
+
+    <!-- 6. MODEL -->
+    <section id="model" class="sec">
+      <div class="sec-head">
+        <h2>Under the hood</h2>
+        <p>A conditional Wasserstein GAN with gradient penalty, trained on transformed return windows. Everything here is computed by the bundled pipeline; nothing is hand-picked.</p>
+      </div>
+      <figure class="card wide"><div id="arch" class="arch"></div></figure>
+      <div class="grid2">
+        <figure class="card"><figcaption><h3>Can a classifier tell them apart?</h3><p id="discNote"></p></figcaption><div id="pca" class="chart"></div></figure>
+        <figure class="card"><figcaption><h3>Experiment</h3><p>Configuration and data used for this run.</p></figcaption><dl class="spec" id="spec"></dl></figure>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span id="footMeta"></span>
+    <span><kbd>G</kbd> generate, <kbd>R</kbd> reveal, <kbd>←</kbd><kbd>→</kbd> change moment, <kbd>T</kbd> theme</span>
+  </footer>
+
+  <div class="tip" id="tip"></div>
+
+  <script src="data/tempora_data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

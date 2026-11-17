@@ -1,0 +1,8 @@
+name,test,pass,real,synthetic
+Fat tails,"Excess kurtosis well above 0, like real returns",True,14.7,12.8
+No linear predictability,Return autocorrelation close to zero at lag 1,True,0.06,0.04
+Volatility clustering,Absolute returns are positively autocorrelated,True,0.29,0.17
+Leverage effect,Falls are followed by higher volatility,True,-0.14,-0.05
+Volatility level,Daily volatility within 20% of the real series,True,1.02%,1.07%
+Tail risk,99% value at risk within 25% of the real series,True,3.13%,3.33%
+Negative skew,Large falls more common than large rises,True,-1.22,-0.66

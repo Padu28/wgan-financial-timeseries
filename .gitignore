@@ -1,0 +1,23 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.env
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Experiments other than the published benchmark
+models/*_torch.npz
+output/
+runs/
+# Downloaded market data (re-create with `tempora data download`)
+data/raw/*.csv
+!data/raw/benchmark_prices.csv
